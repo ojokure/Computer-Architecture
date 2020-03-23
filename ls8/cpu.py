@@ -8,8 +8,9 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = []
+        self.ram = [None] * 256
         self.reg = [0] * 8
+        self.pc = 0
 
     def ram_write(self, value, MAR):
 
@@ -73,25 +74,25 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        PC = 0
+
         halt = False
 
         while not halt:
-            IR = self.ram[PC]
+            IR = self.ram[self.pc]
 
             if IR == "LDI":
-                RO = self.ram_read(PC + 1)
-                value = self.ram_read(PC + 2)
+                RO = self.ram_read(self.pc + 1)
+                value = self.ram_read(self.pc + 2)
 
                 self.ram_write(value, RO)
 
-                PC += 3
+                self.pc += 3
 
             elif IR == "PRN":
-                RO = self.ram_read(PC + 1)
+                RO = self.ram_read(self.pc + 1)
                 print(self.ram[RO])
 
-                PC += 2
+                self.pc += 2
 
             elif IR == "HLT":
                 halt = True
