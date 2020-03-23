@@ -73,4 +73,29 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        PC = 0
+        halt = False
+
+        while not halt:
+            IR = self.ram[PC]
+
+            if IR == "LDI":
+                RO = self.ram_read(PC + 1)
+                value = self.ram_read(PC + 2)
+
+                self.ram_write(value, RO)
+
+                PC += 3
+
+            elif IR == "PRN":
+                RO = self.ram_read(PC + 1)
+                print(self.ram[RO])
+
+                PC += 2
+
+            elif IR == "HLT":
+                halt = True
+
+            else:
+                print("Unknown Instruction")
+                sys.exit(1)
