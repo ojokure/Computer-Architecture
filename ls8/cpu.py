@@ -11,6 +11,17 @@ class CPU:
         self.ram = [0b00000000] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.branchtable = {}
+        self.branchtable[LDI] = self.handle_LDI
+        self.branchtable[PRN] = self.handle_PRN
+        self.branchtable[LDI] = self.handle_LDI
+        self.branchtable[MUL] = self.handle_MUL
+        self.branchtable[HLT] = self.handle_HLT
+
+    def handle_LDI(self, IR, RO, value):
+
+        self.ram_write(value, RO)
+        self.pc += 3
 
     def ram_write(self, value, MAR):
 
@@ -25,23 +36,25 @@ class CPU:
     def load(self):
         """Load a program into memory."""
 
+        if len(sys.argv) != 2:
+            print("usage: cpu.py filename")
+            sys.exit(1)
+
+        prog_name = sys.argv[1]
+
         address = 0
 
-        # For now, we've just hardcoded a program:
+        with open(prog_name) as program:
 
-        program = [
-            # From print8.ls8
-            0b10000010,  # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111,  # PRN R0
-            0b00000000,
-            0b00000001,  # HLT
-        ]
+            for op in program:
+                op = op.split("#")[0].strip()
+                if op == "":
+                    continue
+                print(op)
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+                instruction = int(op, 2)
+                self.ram[address] = instruction
+                address += 1
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
@@ -93,6 +106,13 @@ class CPU:
                 print(self.ram[RO])
 
                 self.pc += 2
+
+            elif IR == 0b10100010:
+                RO = self.ram_read(self.pc + 1)
+                R1 = self.ram_read(self.pc + 2)
+
+                result = RO * R1
+                self.ram_write(RO, result)
 
             elif IR == 0b00000001:
                 halt = True
