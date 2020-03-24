@@ -22,10 +22,10 @@ class CPU:
         self.ram_write(value, RO)
         self.pc += 3
 
-    def handle_PRN(self, IR, RO, value):
+    def handle_PRN(self, RO):
+        self.pc += 2
 
-        self.ram_write(value, RO)
-        self.pc += 3
+        return self.ram[RO]
 
     def handle_MUL(self, IR, RO, value):
 
@@ -75,6 +75,11 @@ class CPU:
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         # elif op == "SUB": etc
+
+        elif op == "MUL":
+            result = self.reg[reg_a] * self.reg[reg_b]
+            self.ram_write(reg_a, result)
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -116,16 +121,8 @@ class CPU:
 
             elif IR == 0b01000111:
                 RO = self.ram_read(self.pc + 1)
-                print(self.ram[RO])
 
-                self.pc += 2
-
-            elif IR == 0b10100010:
-                RO = self.ram_read(self.pc + 1)
-                R1 = self.ram_read(self.pc + 2)
-
-                result = RO * R1
-                self.ram_write(RO, result)
+                self.handle_PRN(RO)
 
             elif IR == 0b00000001:
                 halt = True
