@@ -2,6 +2,11 @@
 
 import sys
 
+LDI = 0b10000010
+PRN = 0b01000111
+MUL = 0b10100010
+HLT = 0b00000001
+
 
 class CPU:
     """Main CPU class."""
@@ -16,21 +21,22 @@ class CPU:
         self.branchtable[PRN] = self.handle_PRN
         self.branchtable[MUL] = self.handle_MUL
         self.branchtable[HLT] = self.handle_HLT
+        self.halt = False
+        self.IR = None
 
-    def handle_LDI(self, IR, RO, value):
+    def handle_LDI(self, operand_1, operand_2):
 
-        self.ram_write(value, RO)
+        self.ram_write(operand_2, operand_1)
         self.pc += 3
 
-    def handle_PRN(self, RO):
+    def handle_PRN(self, operand_1):
         self.pc += 2
 
-        return self.ram[RO]
+        return self.ram[operand_1]
 
-    def handle_MUL(self, IR, RO, value):
+    def handle_MUL(self, operand_1, operand_2):
 
-        self.ram_write(value, RO)
-        self.pc += 3
+        self.alu("MUL", operand_1, operand_2)
 
     def handle_HLT(self):
 
@@ -50,35 +56,39 @@ class CPU:
         """Load a program into memory."""
 
         if len(sys.argv) != 2:
-            print("usage: cpu.py filename")
+            print("usage: ls8.py filename")
             sys.exit(1)
 
-        prog_name = sys.argv[1]
+        try:
+            prog_name = sys.argv[1]
 
-        address = 0
+            address = 0
 
-        with open(prog_name) as program:
+            with open(prog_name) as program:
 
-            for op in program:
-                op = op.split("#")[0].strip()
-                if op == "":
-                    continue
-                print(op)
+                for op in program:
+                    op = op.split("#")[0].strip()
+                    if op == "":
+                        continue
+                    print(op)
 
-                instruction = int(op, 2)
-                self.ram[address] = instruction
-                address += 1
+                    instruction = int(op, 2)
+                    self.ram[address] = instruction
+                    address += 1
+        except FileNotFoundError:
+            print(f"{sys.argv[0]}: {sys.argv[1]} not found")
+            sys.exit(2)
 
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        # elif op == "SUB": etc
 
         elif op == "MUL":
             result = self.reg[reg_a] * self.reg[reg_b]
             self.ram_write(reg_a, result)
+            self.pc += 3
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -109,23 +119,19 @@ class CPU:
         halt = False
 
         while not halt:
-            IR = self.ram[self.pc]
+            self.IR = self.ram[self.pc]
+            operand_1 = self.ram_read(self.pc + 1)
+            operand_2 = self.ram_read(self.pc + 2)
 
-            if IR == 0b10000010:
-                RO = self.ram_read(self.pc + 1)
-                value = self.ram_read(self.pc + 2)
+            if int(self.IR, 2) == LDI:
+                self.handle_LDI(operand_1, operand_2)
 
-                self.ram_write(value, RO)
+            elif int(self.IR, 2) == PRN:
+                self.handle_PRN(operand_1)
 
-                self.pc += 3
-
-            elif IR == 0b01000111:
-                RO = self.ram_read(self.pc + 1)
-
-                self.handle_PRN(RO)
-
-            elif IR == 0b00000001:
+            elif int(self.IR, 2) == HLT:
                 halt = True
+                self.handle_HLT()
 
             else:
                 print("Unknown Instruction")
