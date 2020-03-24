@@ -14,7 +14,6 @@ class CPU:
         self.branchtable = {}
         self.branchtable[LDI] = self.handle_LDI
         self.branchtable[PRN] = self.handle_PRN
-        self.branchtable[LDI] = self.handle_LDI
         self.branchtable[MUL] = self.handle_MUL
         self.branchtable[HLT] = self.handle_HLT
 
@@ -22,6 +21,20 @@ class CPU:
 
         self.ram_write(value, RO)
         self.pc += 3
+
+    def handle_PRN(self, IR, RO, value):
+
+        self.ram_write(value, RO)
+        self.pc += 3
+
+    def handle_MUL(self, IR, RO, value):
+
+        self.ram_write(value, RO)
+        self.pc += 3
+
+    def handle_HLT(self):
+
+        sys.exit(1)
 
     def ram_write(self, value, MAR):
 
