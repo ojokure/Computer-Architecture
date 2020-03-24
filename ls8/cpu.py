@@ -25,31 +25,24 @@ class CPU:
         self.IR = None
 
     def handle_LDI(self, operand_1, operand_2):
-
         self.ram_write(operand_2, operand_1)
         self.pc += 3
 
     def handle_PRN(self, operand_1):
         self.pc += 2
-
         return self.ram[operand_1]
 
     def handle_MUL(self, operand_1, operand_2):
-
         self.alu("MUL", operand_1, operand_2)
 
     def handle_HLT(self):
-
         sys.exit(1)
 
     def ram_write(self, value, MAR):
-
         self.ram[MAR] = value
 
     def ram_read(self, MAR):
-
         MDR = self.ram[MAR]
-
         return MDR
 
     def load(self):
