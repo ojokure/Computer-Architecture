@@ -16,7 +16,7 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        self.ram = [0b00000000] * 256
+        self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
         self.branchtable = {}
@@ -24,31 +24,9 @@ class CPU:
         self.branchtable[PRN] = self.handle_PRN
         self.branchtable[MUL] = self.handle_MUL
         self.branchtable[HLT] = self.handle_HLT
+        self.branchtable[POP] = self.handle_POP
+        self.branchtable[PUSH] = self.handle_PUSH
         self.halt = False
-        self.IR = None
-
-    def handle_LDI(self, operand_1, operand_2):
-        self.ram_write(operand_2, operand_1)
-        self.pc += 3
-
-    def handle_PRN(self, operand_1):
-        print(self.ram[operand_1])
-        self.pc += 2
-
-    def handle_POP(self, operand_1):
-        self.handle_LDI(operand_1, self.ram[self.reg[SP]])
-        self.reg[SP] += 1
-
-    def handle_PUSH(self, operand_1):
-        self.reg[SP] -= 1
-        self.ram_write(self.reg[SP], self.reg[operand_1])
-
-    def handle_MUL(self, operand_1, operand_2):
-        self.alu("MUL", operand_1, operand_2)
-
-    def handle_HLT(self):
-        self.halt = True
-        sys.exit(1)
 
     def ram_write(self, value, MAR):
         self.ram[MAR] = value
@@ -57,7 +35,33 @@ class CPU:
         MDR = self.ram[MAR]
         return MDR
 
-    def load(self, filename):
+    def handle_LDI(self, operand_1, operand_2):
+        self.ram_write(operand_2, operand_1)
+        # self.reg[operand_1] = operand_2
+
+    def handle_PRN(self, operand_1):
+        print(self.reg[operand_1])
+
+    def handle_PUSH(self, operand_1):
+        self.reg[SP] -= 1
+
+        value = self.ram[operand_1]
+        self.ram[self.reg[SP]] = value
+
+    def handle_POP(self, operand_1):
+        value = self.ram[self.reg[SP]]
+        self.reg[operand_1] = value
+
+        self.reg[SP] += 1
+
+    def handle_MUL(self, operand_1, operand_2):
+        self.alu("MUL", operand_1, operand_2)
+
+    def handle_HLT(self):
+        self.halt = True
+        sys.exit(1)
+
+    def load(self):
         """Load a program into memory."""
 
         if len(sys.argv) != 2:
@@ -71,15 +75,19 @@ class CPU:
 
             with open(prog_name) as program:
 
-                for op in program:
-                    op = op.split("#")[0].strip()
+                for line in program:
+
+                    line_split = line.split("#")
+                    op = line_split[0].strip()
+
                     if op == "":
                         continue
-                    print(op)
 
-                    instruction = int(op, 2)
-                    self.ram[address] = instruction
+                    IR = int(op, 2)
+
+                    self.ram[address] = IR
                     address += 1
+
         except FileNotFoundError:
             print(f"{sys.argv[0]}: {sys.argv[1]} not found")
             sys.exit(2)
@@ -89,12 +97,9 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-            self.pc += 3
 
         elif op == "MUL":
-            result = self.reg[reg_a] * self.reg[reg_b]
-            self.ram_write(reg_a, result)
-            self.pc += 3
+            self.reg[reg_a] *= self.reg[reg_b]
 
         else:
             raise Exception("Unsupported ALU operation")
@@ -123,23 +128,26 @@ class CPU:
         """Run the CPU."""
 
         while not self.halt:
-            self.IR = self.ram[self.pc]
+            IR = self.ram[self.pc]
             operand_1 = self.ram_read(self.pc + 1)
-            operand_2 = self.ram_read(self.pc + 2)
-            operand_count = self.IR >> 6  # AA(Instruction Layout)
-            is_ALU_op = self.IR >> 5  # B(Instruction Layout)
-            # is_SET_PC = self.IR >> 4 & 0b00000001  # C(Instruction Layout)
+            operand_count = IR >> 6  # AA(Instruction Layout)
+            is_ALU_op = IR >> 5  # B(Instruction Layout)
 
             if is_ALU_op == 1:
-                if self.IR == MUL:
+                operand_2 = self.ram_read(self.pc + 2)
+                if IR == MUL:
                     # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
                     self.alu("MUL", operand_1, operand_2)
 
-            elif operand_count == 2:
-                self.branchtable[self.IR](operand_1, operand_2)
-
             elif operand_count == 1:
-                self.branchtable[self.IR](operand_1)
+                self.branchtable[IR](operand_1)
 
-            else:
-                self.branchtable[self.IR]()
+            elif operand_count == 2:
+                operand_2 = self.ram_read(self.pc + 2)
+                self.branchtable[IR](operand_1, operand_2)
+
+            elif IR == 0 or None:
+                print(f"exited at {self.pc}")
+                sys.exit(1)
+
+            self.pc += operand_count + 1
