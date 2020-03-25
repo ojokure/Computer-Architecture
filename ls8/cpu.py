@@ -123,7 +123,7 @@ class CPU:
                 self.handle_PRN(operand_1)
 
             elif int(self.IR, 2) == HLT:
-                halt = True
+                # halt = True
                 self.handle_HLT()
 
             else:
