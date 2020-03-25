@@ -6,6 +6,9 @@ LDI = 0b10000010
 PRN = 0b01000111
 MUL = 0b10100010
 HLT = 0b00000001
+POP = 0b01000110
+PUSH = 0b01000101
+SP = 7
 
 
 class CPU:
@@ -29,13 +32,22 @@ class CPU:
         self.pc += 3
 
     def handle_PRN(self, operand_1):
+        print(self.ram[operand_1])
         self.pc += 2
-        return self.ram[operand_1]
+
+    def handle_POP(self, operand_1):
+        self.handle_LDI(operand_1, self.ram[self.reg[SP]])
+        self.reg[SP] += 1
+
+    def handle_PUSH(self, operand_1):
+        self.reg[SP] -= 1
+        self.ram_write(self.reg[SP], self.reg[operand_1])
 
     def handle_MUL(self, operand_1, operand_2):
         self.alu("MUL", operand_1, operand_2)
 
     def handle_HLT(self):
+        self.halt = True
         sys.exit(1)
 
     def ram_write(self, value, MAR):
@@ -45,7 +57,7 @@ class CPU:
         MDR = self.ram[MAR]
         return MDR
 
-    def load(self):
+    def load(self, filename):
         """Load a program into memory."""
 
         if len(sys.argv) != 2:
@@ -77,6 +89,7 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+            self.pc += 3
 
         elif op == "MUL":
             result = self.reg[reg_a] * self.reg[reg_b]
@@ -109,23 +122,24 @@ class CPU:
     def run(self):
         """Run the CPU."""
 
-        halt = False
-
-        while not halt:
+        while not self.halt:
             self.IR = self.ram[self.pc]
             operand_1 = self.ram_read(self.pc + 1)
             operand_2 = self.ram_read(self.pc + 2)
+            operand_count = self.IR >> 6  # AA(Instruction Layout)
+            is_ALU_op = self.IR >> 5  # B(Instruction Layout)
+            # is_SET_PC = self.IR >> 4 & 0b00000001  # C(Instruction Layout)
 
-            if int(self.IR, 2) == LDI:
-                self.handle_LDI(operand_1, operand_2)
+            if is_ALU_op == 1:
+                if self.IR == MUL:
+                    # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
+                    self.alu("MUL", operand_1, operand_2)
 
-            elif int(self.IR, 2) == PRN:
-                self.handle_PRN(operand_1)
+            elif operand_count == 2:
+                self.branchtable[self.IR](operand_1, operand_2)
 
-            elif int(self.IR, 2) == HLT:
-                # halt = True
-                self.handle_HLT()
+            elif operand_count == 1:
+                self.branchtable[self.IR](operand_1)
 
             else:
-                print("Unknown Instruction")
-                sys.exit(1)
+                self.branchtable[self.IR]()
