@@ -4,10 +4,16 @@ import sys
 
 LDI = 0b10000010
 PRN = 0b01000111
-MUL = 0b10100010
 HLT = 0b00000001
 POP = 0b01000110
 PUSH = 0b01000101
+ADD = 0b10100000
+SUB = 0b10100001
+MUL = 0b10100010
+DIV = 0b10100011
+MOD = 0b10100100
+CALL = 0b01010000
+RET = 0b00010001
 SP = 7
 
 
@@ -23,12 +29,23 @@ class CPU:
         self.branchtable[LDI] = self.handle_LDI
         self.branchtable[PRN] = self.handle_PRN
         self.branchtable[MUL] = self.handle_MUL
+        self.branchtable[ADD] = self.handle_ADD
         self.branchtable[HLT] = self.handle_HLT
         self.branchtable[POP] = self.handle_POP
         self.branchtable[PUSH] = self.handle_PUSH
-        self.halt = False
+        self.branchtable[CALL] = self.handle_CALL
+        self.branchtable[RET] = self.handle_RET
 
-    def ram_write(self, value, MAR):
+        # self.ALU_branchtable = {
+        #     ADD: self.alu,
+        #     SUB: self.alu,
+        #     MUL: self.alu,
+        #     MOD: self.alu,
+        # }
+        self.halt = False
+        self.IR = None
+
+    def ram_write(self, MAR, value):
         self.ram[MAR] = value
 
     def ram_read(self, MAR):
@@ -37,25 +54,34 @@ class CPU:
 
     def handle_LDI(self, operand_1, operand_2):
         self.ram_write(operand_2, operand_1)
-        # self.reg[operand_1] = operand_2
+        self.reg[operand_1] = operand_2
 
     def handle_PRN(self, operand_1):
         print(self.reg[operand_1])
 
     def handle_PUSH(self, operand_1):
         self.reg[SP] -= 1
-
-        value = self.ram[operand_1]
-        self.ram[self.reg[SP]] = value
+        self.ram_write(self.reg[SP], self.reg[operand_1])
 
     def handle_POP(self, operand_1):
-        value = self.ram[self.reg[SP]]
-        self.reg[operand_1] = value
+        self.handle_LDI(operand_1, self.ram[self.reg[SP]])
+        self.reg[SP] += 1
 
+    def handle_CALL(self, operand_1):
+        self.reg[SP] -= 1
+        self.ram_write(self.reg[SP], self.pc + 2)
+        self.pc = self.reg[operand_1]
+
+    def handle_RET(self):
+
+        self.pc = self.ram[self.reg[SP]]
         self.reg[SP] += 1
 
     def handle_MUL(self, operand_1, operand_2):
         self.alu("MUL", operand_1, operand_2)
+
+    def handle_ADD(self, operand_1, operand_2):
+        self.alu("ADD", operand_1, operand_2)
 
     def handle_HLT(self):
         self.halt = True
@@ -65,7 +91,7 @@ class CPU:
         """Load a program into memory."""
 
         if len(sys.argv) != 2:
-            print("usage: ls8.py filename")
+            print("usage: ls8.py filename", file=sys.stderr)
             sys.exit(1)
 
         try:
@@ -127,27 +153,33 @@ class CPU:
     def run(self):
         """Run the CPU."""
 
+        self.trace()
+
         while not self.halt:
-            IR = self.ram[self.pc]
+            self.IR = self.ram_read(self.pc)
             operand_1 = self.ram_read(self.pc + 1)
-            operand_count = IR >> 6  # AA(Instruction Layout)
-            is_ALU_op = IR >> 5  # B(Instruction Layout)
+            operand_2 = self.ram_read(self.pc + 2)
+            operand_count = self.IR >> 6  # AA(Instruction Layout)
+            is_ALU_op = self.IR >> 5  # B(Instruction Layout)
+            is_SET_PC = self.IR >> 4 & 0b00000001  # C(Instruction Layout)
 
             if is_ALU_op == 1:
-                operand_2 = self.ram_read(self.pc + 2)
-                if IR == MUL:
+                if self.IR == MUL:
                     # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
                     self.alu("MUL", operand_1, operand_2)
-
-            elif operand_count == 1:
-                self.branchtable[IR](operand_1)
+                if self.IR == ADD:
+                    # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
+                    self.alu("ADD", operand_1, operand_2)
 
             elif operand_count == 2:
-                operand_2 = self.ram_read(self.pc + 2)
-                self.branchtable[IR](operand_1, operand_2)
+                self.branchtable[self.IR](operand_1, operand_2)
 
-            elif IR == 0 or None:
-                print(f"exited at {self.pc}")
+            elif operand_count == 1:
+                self.branchtable[self.IR](operand_1)
+
+            else:  # self.IR == 0 or None:
+                print(f"exited at {self.pc}, {self.IR}")
                 sys.exit(1)
 
-            self.pc += operand_count + 1
+            if is_SET_PC == 0:
+                self.pc += operand_count + 1
