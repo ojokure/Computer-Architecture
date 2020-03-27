@@ -5,15 +5,24 @@ import sys
 LDI = 0b10000010
 PRN = 0b01000111
 HLT = 0b00000001
+MUL = 0b10100010
 POP = 0b01000110
 PUSH = 0b01000101
-ADD = 0b10100000
-SUB = 0b10100001
-MUL = 0b10100010
-DIV = 0b10100011
-MOD = 0b10100100
 CALL = 0b01010000
 RET = 0b00010001
+ADD = 0b10100000
+ST = 0b10000100
+PRA = 0b01001000
+IRET = 0b00010011
+LD = 0b10000011
+CMP = 0b10100111
+JEQ = 0b01010101
+JGE = 0b01011010
+JGT = 0b01010111
+JLE = 0b01011001
+JLT = 0b01011000
+JMP = 0b01010100
+JNE = 0b01010110
 SP = 7
 
 
@@ -26,6 +35,8 @@ class CPU:
         self.reg = [0] * 8
         self.pc = 0
         self.branchtable = {}
+
+        # IR Handlers
         self.branchtable[LDI] = self.handle_LDI
         self.branchtable[PRN] = self.handle_PRN
         self.branchtable[MUL] = self.handle_MUL
@@ -34,16 +45,26 @@ class CPU:
         self.branchtable[POP] = self.handle_POP
         self.branchtable[PUSH] = self.handle_PUSH
         self.branchtable[CALL] = self.handle_CALL
-        self.branchtable[RET] = self.handle_RET
+        self.branchtable[CMP] = self.handle_CMP
+        self.branchtable[JMP] = self.handle_JMP
+        # self.branchtable[ST] = self.handle_ST
+        # self.branchtable[JEQ] = self.handle_JEQ
+        # self.branchtable[JGE] = self.handle_JGE
+        # self.branchtable[JGT] = self.handle_JGT
+        # self.branchtable[JLE] = self.handle_JLE
+        # self.branchtable[JLT] = self.handle_JLT
+        # self.branchtable[JNE] = self.handle_JNE
+        # self.branchtable[IRET] = self.handle_IRET
+        # self.branchtable[PRA] = self.handle_PRA
+        # self.branchtable[LD] = self.handle_LD
 
-        # self.ALU_branchtable = {
-        #     ADD: self.alu,
-        #     SUB: self.alu,
-        #     MUL: self.alu,
-        #     MOD: self.alu,
-        # }
         self.halt = False
         self.IR = None
+
+        # FLAGS
+        self.E = 0
+        self.L = 0
+        self.G = 0
 
     def ram_write(self, MAR, value):
         self.ram[MAR] = value
@@ -76,6 +97,12 @@ class CPU:
 
         self.pc = self.ram[self.reg[SP]]
         self.reg[SP] += 1
+
+    def handle_JMP(self, operand_1):
+        self.pc = self.reg[operand_1]
+
+    def handle_CMP(self, operand_1, operand_2):
+        self.alu("CMP", operand_1, operand_2)
 
     def handle_MUL(self, operand_1, operand_2):
         self.alu("MUL", operand_1, operand_2)
@@ -127,6 +154,16 @@ class CPU:
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
 
+        elif op == "CMP":
+            if self.reg[reg_a] == self.reg[reg_b]:
+                self.E = 1
+
+            elif self.reg[reg_a] < self.reg[reg_b]:
+                self.L = 1
+
+            else:
+                self.G = 1
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -153,8 +190,6 @@ class CPU:
     def run(self):
         """Run the CPU."""
 
-        self.trace()
-
         while not self.halt:
             self.IR = self.ram_read(self.pc)
             operand_1 = self.ram_read(self.pc + 1)
@@ -168,7 +203,6 @@ class CPU:
                     # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
                     self.alu("MUL", operand_1, operand_2)
                 if self.IR == ADD:
-                    # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
                     self.alu("ADD", operand_1, operand_2)
 
             elif operand_count == 2:
@@ -177,9 +211,12 @@ class CPU:
             elif operand_count == 1:
                 self.branchtable[self.IR](operand_1)
 
-            else:  # self.IR == 0 or None:
-                print(f"exited at {self.pc}, {self.IR}")
-                sys.exit(1)
+            else:
+                self.branchtable[self.IR]()
+
+            # else:  # self.IR == 0 or None:
+            #     print(f"exited at {self.pc}, {self.IR}")
+            #     sys.exit(1)
 
             if is_SET_PC == 0:
                 self.pc += operand_count + 1
