@@ -309,13 +309,6 @@ class CPU:
             is_SET_PC = self.IR >> 4 & 0b00000001  # C(Instruction Layout)
             # is_ALU_op = self.IR >> 5  # B(Instruction Layout)
 
-            # if is_ALU_op == 1:
-            #     if self.IR == MUL:
-            #         # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
-            #         self.alu("MUL", operand_1, operand_2)
-            #     if self.IR == ADD:
-            #         self.alu("ADD", operand_1, operand_2)
-
             if operand_count == 2:
                 self.branchtable[self.IR](operand_1, operand_2)
 
@@ -325,9 +318,9 @@ class CPU:
             else:
                 self.branchtable[self.IR]()
 
-            # else:  # self.IR == 0 or None:
-            #     print(f"exited at PC: {self.pc}, Instruction: {self.IR}")
-            #     sys.exit(1)
+            if self.IR == 0 or None:
+                print(f"exited at PC: {self.pc}, Instruction: {self.IR}")
+                sys.exit(1)
 
             if is_SET_PC == 0:
                 self.pc += operand_count + 1
