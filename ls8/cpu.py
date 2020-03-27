@@ -48,7 +48,7 @@ class CPU:
         self.branchtable[CMP] = self.handle_CMP
         self.branchtable[JMP] = self.handle_JMP
         self.branchtable[JEQ] = self.handle_JEQ
-        # self.branchtable[JNE] = self.handle_JNE
+        self.branchtable[JNE] = self.handle_JNE
         # self.branchtable[JGE] = self.handle_JGE
         # self.branchtable[JGT] = self.handle_JGT
         # self.branchtable[JLE] = self.handle_JLE
@@ -103,6 +103,10 @@ class CPU:
 
     def handle_JEQ(self, operand_1):
         if self.E == 1 or self.E is True:
+            self.handle_JMP(operand_1)
+
+    def handle_JNE(self, operand_1):
+        if self.E == 0 or self.E is False:
             self.handle_JMP(operand_1)
 
     def handle_CMP(self, operand_1, operand_2):
