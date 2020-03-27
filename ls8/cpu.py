@@ -33,7 +33,6 @@ class CPU:
         """Construct a new CPU."""
         self.ram = [0] * 256
         self.reg = [0] * 8
-        self.pc = 0
         self.branchtable = {}
 
         # IR Handlers
@@ -53,15 +52,20 @@ class CPU:
         self.branchtable[JGT] = self.handle_JGT
         self.branchtable[JLE] = self.handle_JLE
         self.branchtable[JLT] = self.handle_JLT
+        # self.branchtable[LD] = self.handle_LD
         # self.branchtable[IRET] = self.handle_IRET
         # self.branchtable[PRA] = self.handle_PRA
-        # self.branchtable[LD] = self.handle_LD
         # self.branchtable[ST] = self.handle_ST
 
+        # Internal Registers
         self.halt = False
+        self.pc = 0
         self.IR = None
+        self.MAR = None
+        self.MDR = None
 
         # FLAGS
+        self.FL
         self.E = 0
         self.L = 0
         self.G = 0
@@ -131,6 +135,9 @@ class CPU:
     def handle_MUL(self, operand_1, operand_2):
         self.alu("MUL", operand_1, operand_2)
 
+     def handle_AND(self, operand_1, operand_2):
+        self.alu("AND", operand_1, operand_2)
+
     def handle_ADD(self, operand_1, operand_2):
         self.alu("ADD", operand_1, operand_2)
 
@@ -177,6 +184,14 @@ class CPU:
 
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
+
+        elif op == "AND":
+            value_a = self.reg[reg_a]
+            value_b = self.reg[reg_b]
+
+            result = value_a & value_b
+            
+            self.reg[reg_a] = result
 
         elif op == "CMP":
             if self.reg[reg_a] == self.reg[reg_b]:
