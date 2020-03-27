@@ -322,7 +322,7 @@ class CPU:
                 self.branchtable[self.IR]()
 
             else:  # self.IR == 0 or None:
-                print(f"exited at {self.pc}, {self.IR}")
+                print(f"exited at PC: {self.pc}, Instruction: {self.IR}")
                 sys.exit(1)
 
             if is_SET_PC == 0:
