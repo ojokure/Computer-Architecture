@@ -83,10 +83,10 @@ class CPU:
     def handle_LD(self, operand_1, operand_2):
         self.ram[operand_1] = self.ram[self.reg[operand_2]]
 
-    def handle_PRN(self, operand_1):
+    def handle_PRA(self, operand_1):
         print(chr(self.reg[operand_1]))
 
-    def handle_PRA(self, operand_1):
+    def handle_PRN(self, operand_1):
         print(self.reg[operand_1])
 
     # STACK OPERATIONS
