@@ -64,7 +64,7 @@ class CPU:
         self.MDR = None
 
         # FLAGS
-        self.FL
+        # self.FL
         self.E = 0
         self.L = 0
         self.G = 0
@@ -140,7 +140,7 @@ class CPU:
     def handle_MUL(self, operand_1, operand_2):
         self.alu("MUL", operand_1, operand_2)
 
-     def handle_AND(self, operand_1, operand_2):
+    def handle_AND(self, operand_1, operand_2):
         self.alu("AND", operand_1, operand_2)
 
     def handle_ADD(self, operand_1, operand_2):
@@ -148,7 +148,7 @@ class CPU:
 
     def handle_OR(self, operand_1, operand_2):
         self.alu("OR", operand_1, operand_2)
-    
+
     def handle_XOR(self, operand_1, operand_2):
         self.alu("XOR", operand_1, operand_2)
 
@@ -163,7 +163,6 @@ class CPU:
 
     def handle_MOD(self, operand_1, operand_2):
         self.alu("MOD", operand_1, operand_2)
-
 
     def handle_HLT(self):
         self.halt = True
@@ -254,12 +253,12 @@ class CPU:
             value_a = self.reg[reg_a]
             value_b = self.reg[reg_b]
 
-            if value_b != 0 :
+            if value_b != 0:
                 result = value_a % value_b
                 self.reg[reg_a] = result
 
             else:
-                print("can not divide by 0")
+                print("you cannot divide by 0")
                 self.handle_HLT()
 
         elif op == "CMP":
