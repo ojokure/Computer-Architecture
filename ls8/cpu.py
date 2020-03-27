@@ -117,26 +117,43 @@ class CPU:
     def handle_JEQ(self, operand_1):
         if self.E == 1:
             self.handle_JMP(operand_1)
+        else:
+            self.pc += 2
 
     def handle_JNE(self, operand_1):
         if self.E == 0:
             self.handle_JMP(operand_1)
 
+        else:
+            self.pc += 2
+
     def handle_JGE(self, operand_1):
         if self.G == 1 or self.E == 1:
             self.handle_JMP(operand_1)
+
+        else:
+            self.pc += 2
 
     def handle_JGT(self, operand_1):
         if self.G == 1:
             self.handle_JMP(operand_1)
 
+        else:
+            self.pc += 2
+
     def handle_JLE(self, operand_1):
         if self.L == 1 or self.E == 1:
             self.handle_JMP(operand_1)
 
+        else:
+            self.pc += 2
+
     def handle_JLT(self, operand_1):
         if self.L == 1:
             self.handle_JMP(operand_1)
+
+        else:
+            self.pc += 2
 
     # ALU OPERATIONS
     def handle_CMP(self, operand_1, operand_2):
