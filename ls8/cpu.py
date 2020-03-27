@@ -54,10 +54,10 @@ class CPU:
         self.branchtable[JLT] = self.handle_JLT
         self.branchtable[PRA] = self.handle_PRA
         self.branchtable[LD] = self.handle_LD
-        # self.branchtable[IRET] = self.handle_IRET
+        self.branchtable[RET] = self.handle_RET
+        self.running = True
 
         # Internal Registers
-        self.halt = False
         self.pc = 0
         self.IR = None
         self.MAR = None
@@ -69,15 +69,17 @@ class CPU:
         self.L = 0
         self.G = 0
 
-    def ram_write(self, MAR, value):
-        self.ram[MAR] = value
+    def ram_write(self, address, value):
+        self.MAR = address
+        self.MDR = value
+        self.ram[self.MAR] = self.MDR
 
-    def ram_read(self, MAR):
-        MDR = self.ram[MAR]
-        return MDR
+    def ram_read(self, address):
+        self.MAR = address
+        self.MDR = self.ram[self.MAR]
+        return self.MDR
 
     def handle_LDI(self, operand_1, operand_2):
-        self.ram_write(operand_2, operand_1)
         self.reg[operand_1] = operand_2
 
     def handle_LD(self, operand_1, operand_2):
@@ -168,8 +170,8 @@ class CPU:
         self.alu("MOD", operand_1, operand_2)
 
     def handle_HLT(self):
-        self.halt = True
-        sys.exit(1)
+        self.running = False
+        # sys.exit(1)
 
     def load(self):
         """Load a program into memory."""
@@ -295,38 +297,37 @@ class CPU:
         for i in range(8):
             print(" %02X" % self.reg[i], end='')
 
-        print()
-
     def run(self):
         """Run the CPU."""
 
-        while not self.halt:
+        while self.running:
             self.IR = self.ram_read(self.pc)
             operand_1 = self.ram_read(self.pc + 1)
             operand_2 = self.ram_read(self.pc + 2)
+
             operand_count = self.IR >> 6  # AA(Instruction Layout)
-            is_ALU_op = self.IR >> 5  # B(Instruction Layout)
             is_SET_PC = self.IR >> 4 & 0b00000001  # C(Instruction Layout)
+            # is_ALU_op = self.IR >> 5  # B(Instruction Layout)
 
-            if is_ALU_op == 1:
-                if self.IR == MUL:
-                    # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
-                    self.alu("MUL", operand_1, operand_2)
-                if self.IR == ADD:
-                    self.alu("ADD", operand_1, operand_2)
+            # if is_ALU_op == 1:
+            #     if self.IR == MUL:
+            #         # if self.IR << 4 == 0b00100000:  # (10100010 MUL)
+            #         self.alu("MUL", operand_1, operand_2)
+            #     if self.IR == ADD:
+            #         self.alu("ADD", operand_1, operand_2)
 
-            elif operand_count == 2:
+            if operand_count == 2:
                 self.branchtable[self.IR](operand_1, operand_2)
 
             elif operand_count == 1:
                 self.branchtable[self.IR](operand_1)
 
-            elif self.IR == 0:
+            else:
                 self.branchtable[self.IR]()
 
-            else:  # self.IR == 0 or None:
-                print(f"exited at PC: {self.pc}, Instruction: {self.IR}")
-                sys.exit(1)
+            # else:  # self.IR == 0 or None:
+            #     print(f"exited at PC: {self.pc}, Instruction: {self.IR}")
+            #     sys.exit(1)
 
             if is_SET_PC == 0:
                 self.pc += operand_count + 1
