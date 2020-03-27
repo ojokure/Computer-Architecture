@@ -52,10 +52,9 @@ class CPU:
         self.branchtable[JGT] = self.handle_JGT
         self.branchtable[JLE] = self.handle_JLE
         self.branchtable[JLT] = self.handle_JLT
-        # self.branchtable[LD] = self.handle_LD
-        # self.branchtable[IRET] = self.handle_IRET
-        # self.branchtable[PRA] = self.handle_PRA
+        self.branchtable[PRA] = self.handle_PRA
         # self.branchtable[ST] = self.handle_ST
+        # self.branchtable[IRET] = self.handle_IRET
 
         # Internal Registers
         self.halt = False
@@ -82,8 +81,12 @@ class CPU:
         self.reg[operand_1] = operand_2
 
     def handle_PRN(self, operand_1):
+        print(chr(self.reg[operand_1]))
+
+    def handle_PRA(self, operand_1):
         print(self.reg[operand_1])
 
+    # STACK OPERATIONS
     def handle_PUSH(self, operand_1):
         self.reg[SP] -= 1
         self.ram_write(self.reg[SP], self.reg[operand_1])
@@ -92,16 +95,17 @@ class CPU:
         self.handle_LDI(operand_1, self.ram[self.reg[SP]])
         self.reg[SP] += 1
 
+    # SUBROUTINE OPERATIONS
     def handle_CALL(self, operand_1):
         self.reg[SP] -= 1
         self.ram_write(self.reg[SP], self.pc + 2)
         self.pc = self.reg[operand_1]
 
     def handle_RET(self):
-
         self.pc = self.ram[self.reg[SP]]
         self.reg[SP] += 1
 
+    # JUMP OPERATIONS
     def handle_JMP(self, operand_1):
         self.pc = self.reg[operand_1]
 
@@ -129,6 +133,7 @@ class CPU:
         if self.L == 1:
             self.handle_JMP(operand_1)
 
+    # ALU OPERATIONS
     def handle_CMP(self, operand_1, operand_2):
         self.alu("CMP", operand_1, operand_2)
 
@@ -140,6 +145,25 @@ class CPU:
 
     def handle_ADD(self, operand_1, operand_2):
         self.alu("ADD", operand_1, operand_2)
+
+    def handle_OR(self, operand_1, operand_2):
+        self.alu("OR", operand_1, operand_2)
+    
+    def handle_XOR(self, operand_1, operand_2):
+        self.alu("XOR", operand_1, operand_2)
+
+    def handle_NOT(self, operand_1, operand_2):
+        self.alu("NOT", operand_1, operand_2)
+
+    def handle_SHL(self, operand_1, operand_2):
+        self.alu("SHL", operand_1, operand_2)
+
+    def handle_SHR(self, operand_1, operand_2):
+        self.alu("SHR", operand_1, operand_2)
+
+    def handle_MOD(self, operand_1, operand_2):
+        self.alu("MOD", operand_1, operand_2)
+
 
     def handle_HLT(self):
         self.halt = True
@@ -295,12 +319,12 @@ class CPU:
             elif operand_count == 1:
                 self.branchtable[self.IR](operand_1)
 
-            else:
+            elif self.IR == 0:
                 self.branchtable[self.IR]()
 
-            # else:  # self.IR == 0 or None:
-            #     print(f"exited at {self.pc}, {self.IR}")
-            #     sys.exit(1)
+            else:  # self.IR == 0 or None:
+                print(f"exited at {self.pc}, {self.IR}")
+                sys.exit(1)
 
             if is_SET_PC == 0:
                 self.pc += operand_count + 1
