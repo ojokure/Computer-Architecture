@@ -53,7 +53,7 @@ class CPU:
         self.branchtable[JLE] = self.handle_JLE
         self.branchtable[JLT] = self.handle_JLT
         self.branchtable[PRA] = self.handle_PRA
-        # self.branchtable[ST] = self.handle_ST
+        self.branchtable[LD] = self.handle_LD
         # self.branchtable[IRET] = self.handle_IRET
 
         # Internal Registers
@@ -79,6 +79,9 @@ class CPU:
     def handle_LDI(self, operand_1, operand_2):
         self.ram_write(operand_2, operand_1)
         self.reg[operand_1] = operand_2
+
+    def handle_LD(self, operand_1, operand_2):
+        self.ram[operand_1] = self.ram[self.reg[operand_2]]
 
     def handle_PRN(self, operand_1):
         print(chr(self.reg[operand_1]))
