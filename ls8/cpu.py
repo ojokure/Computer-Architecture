@@ -206,6 +206,38 @@ class CPU:
 
             self.reg[reg_a] = result
 
+        elif op == "NOT":
+            value = self.reg[reg_a]
+            result = ~ value
+
+            self.reg[reg_a] = result
+
+        elif op == "SHL":
+            value_a = self.reg[reg_a]
+            value_b = self.reg[reg_b]
+            result = value_a << value_b
+
+            self.reg[reg_a] = result
+
+        elif op == "SHR":
+            value_a = self.reg[reg_a]
+            value_b = self.reg[reg_b]
+            result = value_a >> value_b
+
+            self.reg[reg_a] = result
+
+        elif op == "MOD":
+            value_a = self.reg[reg_a]
+            value_b = self.reg[reg_b]
+
+            if value_b != 0 :
+                result = value_a % value_b
+                self.reg[reg_a] = result
+
+            else:
+                print("can not divide by 0")
+                self.handle_HLT()
+
         elif op == "CMP":
             if self.reg[reg_a] == self.reg[reg_b]:
                 self.E = 1
