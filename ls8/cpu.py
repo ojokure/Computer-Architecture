@@ -188,9 +188,22 @@ class CPU:
         elif op == "AND":
             value_a = self.reg[reg_a]
             value_b = self.reg[reg_b]
-
             result = value_a & value_b
-            
+
+            self.reg[reg_a] = result
+
+        elif op == "OR":
+            value_a = self.reg[reg_a]
+            value_b = self.reg[reg_b]
+            result = value_a | value_b
+
+            self.reg[reg_a] = result
+
+        elif op == "XOR":
+            value_a = self.reg[reg_a]
+            value_b = self.reg[reg_b]
+            result = value_a ^ value_b
+
             self.reg[reg_a] = result
 
         elif op == "CMP":
