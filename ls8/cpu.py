@@ -50,9 +50,9 @@ class CPU:
         self.branchtable[JEQ] = self.handle_JEQ
         self.branchtable[JNE] = self.handle_JNE
         self.branchtable[JGE] = self.handle_JGE
-        # self.branchtable[JGT] = self.handle_JGT
-        # self.branchtable[JLE] = self.handle_JLE
-        # self.branchtable[JLT] = self.handle_JLT
+        self.branchtable[JGT] = self.handle_JGT
+        self.branchtable[JLE] = self.handle_JLE
+        self.branchtable[JLT] = self.handle_JLT
         # self.branchtable[IRET] = self.handle_IRET
         # self.branchtable[PRA] = self.handle_PRA
         # self.branchtable[LD] = self.handle_LD
@@ -102,15 +102,27 @@ class CPU:
         self.pc = self.reg[operand_1]
 
     def handle_JEQ(self, operand_1):
-        if self.E == 1 or self.E is True:
+        if self.E == 1:
             self.handle_JMP(operand_1)
 
     def handle_JNE(self, operand_1):
-        if self.E == 0 or self.E is False:
+        if self.E == 0:
             self.handle_JMP(operand_1)
 
     def handle_JGE(self, operand_1):
         if self.G == 1 or self.E == 1:
+            self.handle_JMP(operand_1)
+
+    def handle_JGT(self, operand_1):
+        if self.G == 1:
+            self.handle_JMP(operand_1)
+
+    def handle_JLE(self, operand_1):
+        if self.L == 1 or self.E == 1:
+            self.handle_JMP(operand_1)
+
+    def handle_JLT(self, operand_1):
+        if self.L == 1:
             self.handle_JMP(operand_1)
 
     def handle_CMP(self, operand_1, operand_2):
